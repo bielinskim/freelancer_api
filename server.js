@@ -76,16 +76,111 @@ app.get("/projectsbyskills/:skills", function (req, res) {
         });
     });
 });
-app.post("/post", function (req, res) {
-    console.log("test");
+app.get("/offers/:project_id", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "SELECT * FROM offers WHERE project_id = " + req.params.project_id,
+            function (err, offers) {
+                if (err) throw err;
+                resolve(offers);
+            }
+        );
+    }).then((offers) => {
+        offers.forEach((row) => {
+            new Promise((resolve2, reject) => {
+                setTimeout(() => resolve2(), 1);
+            })
+                .then(function () {
+                    var skills = 0;
+                    var user = 0;
+                    con.query(
+                        "SELECT s.name FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
+                            row.offer_id,
+                        function (err, skills) {
+                            if (err) throw err;
+                            row.skills = skills;
+                        }
+                    );
+                })
+                .then(function (skills) {
+                    con.query(
+                        "SELECT login, email FROM users WHERE user_id = " +
+                            row.user_id,
+                        function (err, user) {
+                            if (err) throw err;
+                            row.user = user;
+                        }
+                    );
+                });
+        });
+    });
+});
+
+// new Promise((resolve2, reject) => {
+//     con.query(
+//         "SELECT s.name FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
+//             row.offer_id,
+//         function (err, skills) {
+//             if (err) throw err;
+//             con.query(
+//                 "SELECT u.login, u.email FROM offers o, users u WHERE u.offer_id = " +
+//                     row.user_id,
+//                 function (err, user) {
+//                     if (err) throw err;
+//                     resolve2(skills, user);
+//                 }
+//             ).bind(this);
+//         }
+//     );
+// }).then((skills, user) => {
+//     row.skills = skills;
+//     row.user = user;
+//     if (offers.indexOf(row) == offers.length - 1) {
+//         res.send(offers);
+//     }
+// });
+
+app.post("/register", function (req, res) {
+    con.query(
+        "INSERT INTO users(login, password, email, role_id) VALUES ('" +
+            req.body.login +
+            "', '" +
+            req.body.password +
+            "', '" +
+            req.body.mail +
+            "', " +
+            req.body.role +
+            ")",
+        function (err) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
+app.get("/login/:login/:password", function (req, res) {
+    con.query(
+        "SELECT user_id FROM users WHERE login = '" +
+            req.params.login +
+            "' AND password = '" +
+            req.params.password +
+            "' GROUP BY login",
+        function (err, result) {
+            if (err) throw err;
+            res.send(result);
+        }
+    );
+});
+app.post("/createproject", function (req, res) {
     var projectId = null;
     con.query(
-        "INSERT INTO projects(category_id, description, price) VALUES (" +
+        "INSERT INTO projects(category_id, description, price, author_id) VALUES (" +
             req.body.category +
             ", '" +
             req.body.desc +
             "', " +
             req.body.price +
+            ", " +
+            req.body.user_id +
             ")",
         function (err, result) {
             if (err) throw err;
@@ -94,6 +189,41 @@ app.post("/post", function (req, res) {
                 con.query(
                     "INSERT INTO project_skills(project_id, skill_id) VALUES (" +
                         projectId +
+                        ", " +
+                        skill +
+                        ")",
+                    function (err) {
+                        if (err) throw err;
+                    }
+                );
+            });
+        }
+    );
+});
+
+app.post("/postoffer", function (req, res) {
+    var offerId = null;
+    con.query(
+        "INSERT INTO offers(category_id, message, estimated_time, price, project_id, user_id) VALUES (" +
+            req.body.category +
+            ", '" +
+            req.body.desc +
+            "', " +
+            req.body.time +
+            ", " +
+            req.body.price +
+            ", " +
+            req.body.project_id +
+            ", " +
+            req.body.user_id +
+            ")",
+        function (err, result) {
+            if (err) throw err;
+            offerId = result.offerId; // wstawione id
+            req.body.skills.forEach((skill) => {
+                con.query(
+                    "INSERT INTO offer_skills(offer_id, skill_id) VALUES (" +
+                        offerId +
                         ", " +
                         skill +
                         ")",
