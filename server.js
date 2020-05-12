@@ -149,7 +149,6 @@ app.get("/login/:login/:password", function (req, res) {
     );
 });
 app.post("/createproject", function (req, res) {
-    var projectId = null;
     con.query(
         "INSERT INTO projects(category_id, description, price, author_id) VALUES (" +
             req.body.category +
@@ -162,7 +161,7 @@ app.post("/createproject", function (req, res) {
             ")",
         function (err, result) {
             if (err) throw err;
-            projectId = result.insertId; // wstawione id
+            var projectId = result.insertId; // wstawione id
             req.body.skills.forEach((skill) => {
                 con.query(
                     "INSERT INTO project_skills(project_id, skill_id) VALUES (" +
@@ -180,14 +179,13 @@ app.post("/createproject", function (req, res) {
 });
 
 app.post("/postoffer", function (req, res) {
-    var offerId = null;
     con.query(
         "INSERT INTO offers(category_id, message, estimated_time, price, project_id, user_id) VALUES (" +
             req.body.category +
             ", '" +
-            req.body.desc +
+            req.body.message +
             "', " +
-            req.body.time +
+            req.body.estimated_time +
             ", " +
             req.body.price +
             ", " +
@@ -197,7 +195,7 @@ app.post("/postoffer", function (req, res) {
             ")",
         function (err, result) {
             if (err) throw err;
-            offerId = result.offerId; // wstawione id
+            var offerId = result.insertId; // wstawione id
             req.body.skills.forEach((skill) => {
                 con.query(
                     "INSERT INTO offer_skills(offer_id, skill_id) VALUES (" +
