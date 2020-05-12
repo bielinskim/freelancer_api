@@ -79,7 +79,8 @@ app.get("/projectsbyskills/:skills", function (req, res) {
 app.get("/offers/:project_id", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT * FROM offers WHERE project_id = " + req.params.project_id,
+            "SELECT offer_id, category_id, message, estimated_time, price, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') as created_at, project_id, user_id  FROM offers WHERE project_id = " +
+                req.params.project_id,
             function (err, offers) {
                 if (err) throw err;
                 resolve(offers);
@@ -91,8 +92,6 @@ app.get("/offers/:project_id", function (req, res) {
                 setTimeout(() => resolve2(), 1);
             })
                 .then(function () {
-                    var skills = 0;
-                    var user = 0;
                     con.query(
                         "SELECT s.name FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
                             row.offer_id,
@@ -109,36 +108,15 @@ app.get("/offers/:project_id", function (req, res) {
                         function (err, user) {
                             if (err) throw err;
                             row.user = user;
+                            if (offers.indexOf(row) == offers.length - 1) {
+                                res.send(offers);
+                            }
                         }
                     );
                 });
         });
     });
 });
-
-// new Promise((resolve2, reject) => {
-//     con.query(
-//         "SELECT s.name FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
-//             row.offer_id,
-//         function (err, skills) {
-//             if (err) throw err;
-//             con.query(
-//                 "SELECT u.login, u.email FROM offers o, users u WHERE u.offer_id = " +
-//                     row.user_id,
-//                 function (err, user) {
-//                     if (err) throw err;
-//                     resolve2(skills, user);
-//                 }
-//             ).bind(this);
-//         }
-//     );
-// }).then((skills, user) => {
-//     row.skills = skills;
-//     row.user = user;
-//     if (offers.indexOf(row) == offers.length - 1) {
-//         res.send(offers);
-//     }
-// });
 
 app.post("/register", function (req, res) {
     con.query(
