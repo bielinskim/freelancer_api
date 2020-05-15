@@ -20,6 +20,7 @@ app.listen(8080, function () {
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "*");
     res.header(
         "Access-Control-Allow-Headers",
         "Origin, X-Requested-With, Content-Type, Accept"
@@ -38,8 +39,7 @@ app.get("/skills/:id", function (req, res) {
     const id = req.params.id;
     con.query("SELECT * FROM skills WHERE category_id = " + id, function (
         err,
-        result,
-        fields
+        result
     ) {
         if (err) throw err;
         res.send(result);
@@ -47,6 +47,7 @@ app.get("/skills/:id", function (req, res) {
 });
 app.get("/projectsbyskills/:skills", function (req, res) {
     new Promise((resolve, reject) => {
+        // pobierz projekt jesli przynajmniej jeden skill_id jest taki sam jak w req.params
         con.query(
             "SELECT p.* FROM projects p, project_skills ps WHERE ps.skill_id IN (" +
                 req.params.skills +
@@ -150,13 +151,13 @@ app.get("/login/:login/:password", function (req, res) {
 });
 app.post("/createproject", function (req, res) {
     con.query(
-        "INSERT INTO projects(category_id, description, price, author_id) VALUES (" +
+        "INSERT INTO projects(category_id, description, price, status_id, author_id) VALUES (" +
             req.body.category +
             ", '" +
             req.body.desc +
             "', " +
             req.body.price +
-            ", " +
+            ", 1," +
             req.body.user_id +
             ")",
         function (err, result) {
@@ -208,6 +209,18 @@ app.post("/postoffer", function (req, res) {
                     }
                 );
             });
+        }
+    );
+});
+app.patch("/chooseoffer", function (req, res) {
+    con.query(
+        "UPDATE projects SET offer_accepted_id = " +
+            req.body.offer_id +
+            ", status_id = 2 WHERE project_id = " +
+            req.body.project_id,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
         }
     );
 });
