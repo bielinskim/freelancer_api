@@ -111,6 +111,7 @@ app.get("/offers/:project_id", function (req, res) {
                             row.user = user;
                             if (offers.indexOf(row) == offers.length - 1) {
                                 res.send(offers);
+                                res.end();
                             }
                         }
                     );
@@ -188,6 +189,7 @@ app.post("/createproject", function (req, res) {
                         ")",
                     function (err) {
                         if (err) throw err;
+                        res.end();
                     }
                 );
             });
@@ -222,6 +224,7 @@ app.post("/postoffer", function (req, res) {
                         ")",
                     function (err) {
                         if (err) throw err;
+                        res.end();
                     }
                 );
             });
