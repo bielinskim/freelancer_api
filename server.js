@@ -149,6 +149,22 @@ app.get("/login/:login/:password", function (req, res) {
         }
     );
 });
+app.get("/checkifcanpostoffer/:userId/:projectId", function (req, res) {
+    con.query(
+        "SELECT offer_id FROM offers WHERE user_id = " +
+            req.params.userId +
+            " AND project_id = " +
+            req.params.projectId,
+        function (err, result) {
+            if (err) throw err;
+            if (result.length >= 1) {
+                res.send(false);
+            } else {
+                res.send(true);
+            }
+        }
+    );
+});
 app.post("/createproject", function (req, res) {
     con.query(
         "INSERT INTO projects(category_id, description, price, status_id, author_id) VALUES (" +
