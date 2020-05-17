@@ -139,7 +139,7 @@ app.post("/register", function (req, res) {
 });
 app.get("/login/:login/:password", function (req, res) {
     con.query(
-        "SELECT user_id FROM users WHERE login = '" +
+        "SELECT user_id, role_id FROM users WHERE login = '" +
             req.params.login +
             "' AND password = '" +
             req.params.password +
@@ -165,6 +165,96 @@ app.get("/checkifcanpostoffer/:userId/:projectId", function (req, res) {
             }
         }
     );
+});
+app.get("/getprojectsbydate/:period", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "SELECT * FROM projects WHERE DATEDIFF(created_at, NOW()) <= 7",
+            function (err, result) {
+                if (err) throw err;
+                resolve(result);
+            }
+        );
+    }).then((projects) => {
+        projects.forEach((row) => {
+            new Promise((resolve2, reject) => {
+                con.query(
+                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                        row.project_id,
+                    function (err, skills) {
+                        if (err) throw err;
+                        resolve2(skills);
+                    }
+                );
+            }).then((skills) => {
+                row.skills = skills;
+                if (projects.indexOf(row) == projects.length - 1) {
+                    res.send(projects);
+                }
+            });
+        });
+    });
+});
+app.get("/getmyprojects/:userId", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "SELECT * FROM projects WHERE author_id = " + req.params.userId,
+            function (err, result) {
+                if (err) throw err;
+                resolve(result);
+            }
+        );
+    }).then((projects) => {
+        projects.forEach((row) => {
+            new Promise((resolve2, reject) => {
+                con.query(
+                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                        row.project_id,
+                    function (err, skills) {
+                        if (err) throw err;
+                        resolve2(skills);
+                    }
+                );
+            }).then((skills) => {
+                row.skills = skills;
+                if (projects.indexOf(row) == projects.length - 1) {
+                    res.send(projects);
+                }
+            });
+        });
+    });
+});
+app.get("/getprojectstodo/:userId", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "SELECT p.*, u.login, u.email FROM projects p, offers o, users u WHERE p.accepted_offer_id = o.offer_id AND o.user_id = " +
+                req.params.userId +
+                " AND u.user_id = " +
+                req.params.userId,
+            function (err, result) {
+                if (err) throw err;
+                resolve(result);
+            }
+        );
+    }).then((projects) => {
+        projects.forEach((row) => {
+            new Promise((resolve2, reject) => {
+                con.query(
+                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                        row.project_id,
+                    function (err, skills) {
+                        if (err) throw err;
+                        resolve2(skills);
+                    }
+                );
+            }).then((skills) => {
+                row.skills = skills;
+                if (projects.indexOf(row) == projects.length - 1) {
+                    res.send(projects);
+                }
+            });
+        });
+    });
 });
 app.post("/createproject", function (req, res) {
     con.query(
@@ -233,10 +323,29 @@ app.post("/postoffer", function (req, res) {
 });
 app.patch("/chooseoffer", function (req, res) {
     con.query(
-        "UPDATE projects SET offer_accepted_id = " +
+        "UPDATE projects SET accepted_offer_id = " +
             req.body.offer_id +
             ", status_id = 2 WHERE project_id = " +
             req.body.project_id,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
+app.patch("/setstatustodone", function (req, res) {
+    con.query(
+        "UPDATE projects SET status_id = 3 WHERE project_id = " +
+            req.body.project_id,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
+app.delete("/deleteproject/:projectId", function (req, res) {
+    con.query(
+        "DELETE FROM projects WHERE project_id = " + req.params.projectId,
         function (err, result) {
             if (err) throw err;
             res.end();
