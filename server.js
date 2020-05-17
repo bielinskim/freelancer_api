@@ -77,6 +77,35 @@ app.get("/projectsbyskills/:skills", function (req, res) {
         });
     });
 });
+app.get("/getoffersbydate/:period", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "SELECT * FROM offers WHERE DATEDIFF(created_at, NOW()) <= 7",
+            function (err, result) {
+                if (err) throw err;
+                resolve(result);
+            }
+        );
+    }).then((offers) => {
+        offers.forEach((row) => {
+            new Promise((resolve2, reject) => {
+                con.query(
+                    "SELECT * FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
+                        row.offer_id,
+                    function (err, skills) {
+                        if (err) throw err;
+                        resolve2(skills);
+                    }
+                );
+            }).then((skills) => {
+                row.skills = skills;
+                if (offers.indexOf(row) == offers.length - 1) {
+                    res.send(offers);
+                }
+            });
+        });
+    });
+});
 app.get("/offers/:project_id", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
@@ -179,7 +208,7 @@ app.get("/getprojectsbydate/:period", function (req, res) {
         projects.forEach((row) => {
             new Promise((resolve2, reject) => {
                 con.query(
-                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                    "SELECT * FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
                         row.project_id,
                     function (err, skills) {
                         if (err) throw err;
@@ -321,6 +350,98 @@ app.post("/postoffer", function (req, res) {
         }
     );
 });
+app.patch("/editproject", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "UPDATE projects SET category_id = " +
+                req.body.category_id +
+                ", description = '" +
+                req.body.description +
+                "', price = " +
+                req.body.price +
+                ", status_id = " +
+                req.body.status_id +
+                " WHERE project_id = " +
+                req.body.project_id,
+            function (err, result) {
+                if (err) throw err;
+                resolve();
+            }
+        );
+    })
+        .then(() => {
+            con.query(
+                "DELETE FROM project_skills WHERE project_id = " +
+                    req.body.project_id,
+                function (err, skills) {
+                    if (err) throw err;
+                    return;
+                }
+            );
+        })
+        .then(() => {
+            req.body.skills.forEach((skill_id) => {
+                con.query(
+                    "INSERT INTO project_skills(project_id, skill_id) VALUES (" +
+                        req.body.project_id +
+                        ", " +
+                        skill_id +
+                        ")",
+                    function (err) {
+                        if (err) throw err;
+                        res.end();
+                        return;
+                    }
+                );
+            });
+        });
+});
+app.patch("/editoffer", function (req, res) {
+    new Promise((resolve, reject) => {
+        con.query(
+            "UPDATE offers SET category_id = " +
+                req.body.category_id +
+                ", message = '" +
+                req.body.message +
+                "', price = " +
+                req.body.price +
+                ", estimated_time = " +
+                req.body.estimated_time +
+                " WHERE offer_id = " +
+                req.body.offer_id,
+            function (err, result) {
+                if (err) throw err;
+                resolve();
+            }
+        );
+    })
+        .then(() => {
+            con.query(
+                "DELETE FROM offer_skills WHERE offer_id = " +
+                    req.body.offer_id,
+                function (err, skills) {
+                    if (err) throw err;
+                    return;
+                }
+            );
+        })
+        .then(() => {
+            req.body.skills.forEach((skill_id) => {
+                con.query(
+                    "INSERT INTO offer_skills(offer_id, skill_id) VALUES (" +
+                        req.body.offer_id +
+                        ", " +
+                        skill_id +
+                        ")",
+                    function (err) {
+                        if (err) throw err;
+                        res.end();
+                        return;
+                    }
+                );
+            });
+        });
+});
 app.patch("/chooseoffer", function (req, res) {
     con.query(
         "UPDATE projects SET accepted_offer_id = " +
@@ -346,6 +467,15 @@ app.patch("/setstatustodone", function (req, res) {
 app.delete("/deleteproject/:projectId", function (req, res) {
     con.query(
         "DELETE FROM projects WHERE project_id = " + req.params.projectId,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
+app.delete("/deleteoffer/:offerId", function (req, res) {
+    con.query(
+        "DELETE FROM offers WHERE offer_id = " + req.params.offerId,
         function (err, result) {
             if (err) throw err;
             res.end();
