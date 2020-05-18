@@ -29,8 +29,22 @@ app.use(function (req, res, next) {
 });
 app.use(express.json());
 
+app.get("/roles", function (req, res) {
+    con.query("SELECT * FROM roles", function (err, result) {
+        if (err) throw err;
+        res.send(result);
+    });
+});
+
+app.get("/users", function (req, res) {
+    con.query("SELECT * FROM users", function (err, result) {
+        if (err) throw err;
+        res.send(result);
+    });
+});
+
 app.get("/categories", function (req, res) {
-    con.query("SELECT * FROM categories", function (err, result, fields) {
+    con.query("SELECT * FROM categories", function (err, result) {
         if (err) throw err;
         res.send(result);
     });
@@ -350,6 +364,24 @@ app.post("/postoffer", function (req, res) {
         }
     );
 });
+app.patch("/edituser", function (req, res) {
+    con.query(
+        "UPDATE users SET login = '" +
+            req.body.login +
+            "', password = '" +
+            req.body.password +
+            "', email = '" +
+            req.body.email +
+            "', role_id = " +
+            req.body.role_id +
+            " WHERE user_id = " +
+            req.body.user_id,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
 app.patch("/editproject", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
@@ -476,6 +508,15 @@ app.delete("/deleteproject/:projectId", function (req, res) {
 app.delete("/deleteoffer/:offerId", function (req, res) {
     con.query(
         "DELETE FROM offers WHERE offer_id = " + req.params.offerId,
+        function (err, result) {
+            if (err) throw err;
+            res.end();
+        }
+    );
+});
+app.delete("/deleteuser/:userId", function (req, res) {
+    con.query(
+        "DELETE FROM users WHERE user_id = " + req.params.userId,
         function (err, result) {
             if (err) throw err;
             res.end();
