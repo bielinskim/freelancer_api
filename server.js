@@ -63,7 +63,7 @@ app.get("/projectsbyskills/:skills", function (req, res) {
     new Promise((resolve, reject) => {
         // pobierz projekt jesli przynajmniej jeden skill_id jest taki sam jak w req.params
         con.query(
-            "SELECT p.* FROM projects p, project_skills ps WHERE ps.skill_id IN (" +
+            "SELECT p.*, u.login, c.* FROM projects p, project_skills ps, users u, categories c WHERE c.category_id = p.category_id AND p.author_id = u.user_id AND ps.skill_id IN (" +
                 req.params.skills +
                 ") GROUP BY p.project_id",
             function (err, projects) {
