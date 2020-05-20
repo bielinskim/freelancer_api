@@ -251,8 +251,11 @@ app.get("/getmyprojects/:userId", function (req, res) {
         projects.forEach((row) => {
             new Promise((resolve2, reject) => {
                 con.query(
-                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
-                        row.project_id,
+                    "(SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                        row.project_id +
+                        ") UNION (SELECT u.email FROM users u, offers o WHERE o.offer_id = " +
+                        row.accepted_offer_id +
+                        " AND o.user_id = u.user_id",
                     function (err, skills) {
                         if (err) throw err;
                         resolve2(skills);
