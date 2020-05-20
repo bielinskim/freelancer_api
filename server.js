@@ -241,7 +241,8 @@ app.get("/getprojectsbydate/:period", function (req, res) {
 app.get("/getmyprojects/:userId", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT * FROM projects WHERE author_id = " + req.params.userId,
+            "SELECT *, c.* FROM projects p, categories c WHERE c.category_id = p.category_id AND p.author_id = " +
+                req.params.userId,
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
@@ -251,20 +252,32 @@ app.get("/getmyprojects/:userId", function (req, res) {
         projects.forEach((row) => {
             new Promise((resolve2, reject) => {
                 con.query(
-                    "(SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
-                        row.project_id +
-                        ") UNION (SELECT u.email FROM users u, offers o WHERE o.offer_id = " +
-                        row.accepted_offer_id +
-                        " AND o.user_id = u.user_id",
+                    "SELECT s.name FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                        row.project_id,
                     function (err, skills) {
                         if (err) throw err;
-                        resolve2(skills);
+                        if (row.accepted_offer_id == null) {
+                            row.accepted_offer_id = 0;
+                        }
+                        con.query(
+                            "SELECT u.login, u.email FROM projects p, offers o, users u WHERE u.user_id = o.user_id AND o.offer_id = " +
+                                row.accepted_offer_id +
+                                " AND p.author_id = " +
+                                req.params.userId +
+                                " AND p.accepted_offer_id GROUP BY email",
+                            function (err, contractor) {
+                                if (err) throw err;
+                                row.contractor = contractor;
+                                row.skills = skills;
+                                resolve2();
+                            }
+                        );
                     }
                 );
-            }).then((skills) => {
-                row.skills = skills;
+            }).then(() => {
                 if (projects.indexOf(row) == projects.length - 1) {
                     res.send(projects);
+                    res.end();
                 }
             });
         });
