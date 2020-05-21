@@ -94,7 +94,7 @@ app.get("/projectsbyskills/:skills", function (req, res) {
 app.get("/getoffersbydate/:period", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT * FROM offers WHERE DATEDIFF(created_at, NOW()) <= 7",
+            "SELECT o.*, c.* FROM offers o, categories c WHERE c.category_id = o.category_id AND DATEDIFF(created_at, NOW()) <= 7",
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
