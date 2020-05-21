@@ -212,7 +212,7 @@ app.get("/checkifcanpostoffer/:userId/:projectId", function (req, res) {
 app.get("/getprojectsbydate/:period", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT * FROM projects WHERE DATEDIFF(created_at, NOW()) <= 7",
+            "SELECT p.*, c.* FROM projects p, categories c WHERE c.category_id = p.category_id AND DATEDIFF(created_at, NOW()) <= 7",
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
@@ -286,7 +286,7 @@ app.get("/getmyprojects/:userId", function (req, res) {
 app.get("/getprojectstodo/:userId", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT p.*, u.login, u.email FROM projects p, offers o, users u WHERE p.accepted_offer_id = o.offer_id AND o.user_id = " +
+            "SELECT p.*, u.login, u.email, c.* FROM projects p, offers o, users u, categories c WHERE p.category_id = c.category_id AND p.accepted_offer_id = o.offer_id AND o.user_id = " +
                 req.params.userId +
                 " AND u.user_id = " +
                 req.params.userId,
