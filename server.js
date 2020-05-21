@@ -37,10 +37,13 @@ app.get("/roles", function (req, res) {
 });
 
 app.get("/users", function (req, res) {
-    con.query("SELECT * FROM users", function (err, result) {
-        if (err) throw err;
-        res.send(result);
-    });
+    con.query(
+        "SELECT u.*, r.name AS role_name FROM users u, roles r WHERE u.role_id = r.role_id",
+        function (err, result) {
+            if (err) throw err;
+            res.send(result);
+        }
+    );
 });
 
 app.get("/categories", function (req, res) {
