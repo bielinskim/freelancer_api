@@ -291,8 +291,7 @@ app.get("/getprojectstodo/:userId", function (req, res) {
         con.query(
             "SELECT p.*, u.login, u.email, c.* FROM projects p, offers o, users u, categories c WHERE p.category_id = c.category_id AND p.accepted_offer_id = o.offer_id AND o.user_id = " +
                 req.params.userId +
-                " AND u.user_id = " +
-                req.params.userId,
+                " AND u.user_id = p.author_id",
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
@@ -320,13 +319,15 @@ app.get("/getprojectstodo/:userId", function (req, res) {
 });
 app.post("/createproject", function (req, res) {
     con.query(
-        "INSERT INTO projects(category_id, description, price, status_id, author_id) VALUES (" +
+        "INSERT INTO projects(category_id, title, description, price, status_id, author_id) VALUES (" +
             req.body.category +
             ", '" +
+            req.body.title +
+            "', '" +
             req.body.desc +
             "', " +
             req.body.price +
-            ", 1," +
+            ", 1, " +
             req.body.user_id +
             ")",
         function (err, result) {
@@ -406,7 +407,9 @@ app.patch("/editproject", function (req, res) {
         con.query(
             "UPDATE projects SET category_id = " +
                 req.body.category_id +
-                ", description = '" +
+                ", title = '" +
+                req.body.title +
+                "', description = '" +
                 req.body.description +
                 "', price = " +
                 req.body.price +
