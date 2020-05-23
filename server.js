@@ -1,6 +1,7 @@
 var express = require("express");
 var app = express();
 var mysql = require("mysql");
+const http = require("http");
 const hostname = "77.55.223.193";
 const port = 81;
 
@@ -14,6 +15,12 @@ var con = mysql.createConnection({
 con.connect(function (err) {
     if (err) throw err;
     console.log("Connected!");
+});
+
+const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain");
+    res.end("App is Up and Running!\n");
 });
 
 app.listen(port, hostname, function () {
