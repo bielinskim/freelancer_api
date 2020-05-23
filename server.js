@@ -17,11 +17,6 @@ con.connect(function (err) {
     console.log("Connected!");
 });
 
-let app = http.createServer(function (req, res) {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Hello World!");
-});
-
 app.listen(port, hostname, function () {
     console.log("Serwer dziala na porcie 81");
 });
