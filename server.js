@@ -3,9 +3,9 @@ var app = express();
 var mysql = require("mysql");
 
 var con = mysql.createConnection({
-    host: "localhost",
+    host: "77.55.223.193",
     user: "root",
-    password: "",
+    password: "Narsimnes12#",
     database: "freelancer",
 });
 
@@ -14,7 +14,7 @@ con.connect(function (err) {
     console.log("Connected!");
 });
 
-app.listen(8080, function () {
+app.listen(81, function () {
     console.log("Serwer dziala na porcie 8080");
 });
 
