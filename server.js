@@ -17,7 +17,7 @@ con.connect(function (err) {
     console.log("Connected!");
 });
 
-const server = http.createServer((req, res) => {
+http.createServer((req, res) => {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/plain");
     res.end("App is Up and Running!\n");
