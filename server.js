@@ -15,7 +15,7 @@ con.connect(function (err) {
 });
 
 app.listen(81, function () {
-    console.log("Serwer dziala na porcie 8080");
+    console.log("Serwer dziala na porcie 81");
 });
 
 app.use(function (req, res, next) {
