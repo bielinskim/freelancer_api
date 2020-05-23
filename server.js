@@ -17,10 +17,10 @@ con.connect(function (err) {
     console.log("Connected!");
 });
 
-http.createServer(function (req, res) {
+let app = http.createServer(function (req, res) {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("Hello World!");
-}).listen(81);
+});
 
 app.listen(port, hostname, function () {
     console.log("Serwer dziala na porcie 81");
