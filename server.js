@@ -1,6 +1,8 @@
 var express = require("express");
 var app = express();
 var mysql = require("mysql");
+const hostname = "77.55.223.193";
+const port = 81;
 
 var con = mysql.createConnection({
     host: "77.55.223.193",
@@ -14,7 +16,7 @@ con.connect(function (err) {
     console.log("Connected!");
 });
 
-app.listen(81, function () {
+app.listen(port, hostname, function () {
     console.log("Serwer dziala na porcie 81");
 });
 
