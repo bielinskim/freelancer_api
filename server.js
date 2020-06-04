@@ -100,30 +100,35 @@ app.get("/projectsbyskills/:skills", function (req, res) {
 app.get("/getoffersbydate/:period", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT o.*, c.* FROM offers o, categories c WHERE c.category_id = o.category_id AND DATEDIFF(created_at, NOW()) <= 7",
+            "SELECT o.*, c.* FROM offers o, categories c WHERE c.category_id = o.category_id AND DATEDIFF(NOW(), created_at) <= " +
+                req.params.period,
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
             }
         );
     }).then((offers) => {
-        offers.forEach((row) => {
-            new Promise((resolve2, reject) => {
-                con.query(
-                    "SELECT * FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
-                        row.offer_id,
-                    function (err, skills) {
-                        if (err) throw err;
-                        resolve2(skills);
+        if (offers.length) {
+            offers.forEach((row) => {
+                new Promise((resolve2, reject) => {
+                    con.query(
+                        "SELECT * FROM offer_skills os, skills s WHERE os.skill_id = s.skill_id AND os.offer_id = " +
+                            row.offer_id,
+                        function (err, skills) {
+                            if (err) throw err;
+                            resolve2(skills);
+                        }
+                    );
+                }).then((skills) => {
+                    row.skills = skills;
+                    if (offers.indexOf(row) == offers.length - 1) {
+                        res.send(offers);
                     }
-                );
-            }).then((skills) => {
-                row.skills = skills;
-                if (offers.indexOf(row) == offers.length - 1) {
-                    res.send(offers);
-                }
+                });
             });
-        });
+        } else {
+            res.send(offers);
+        }
     });
 });
 app.get("/offers/:project_id", function (req, res) {
@@ -215,33 +220,108 @@ app.get("/checkifcanpostoffer/:userId/:projectId", function (req, res) {
         }
     );
 });
+app.get("/getreportbydate/:period", function (req, res) {
+    new Promise((resolve, reject) => {
+        var report = {};
+        con.query(
+            "SELECT count(project_id) as projects_count FROM projects WHERE DATEDIFF(NOW(), created_at) <= " +
+                req.params.period,
+            function (err, result) {
+                if (err) throw err;
+                if (result) {
+                    report.projects_count = result[0].projects_count;
+                }
+                resolve(report);
+            }
+        );
+    })
+        .then((report) => {
+            con.query(
+                "SELECT p.status_id, s.name, count(p.project_id) as projects_count FROM projects p, statuses s WHERE p.status_id = s.status_id AND DATEDIFF(NOW(), created_at) <= " +
+                    req.params.period +
+                    " GROUP BY status_id",
+                function (err, result) {
+                    if (err) throw err;
+                    if (result) {
+                        report.projects_count_by_statuses = result;
+                    }
+                }
+            );
+            return report;
+        })
+        .then((report) => {
+            con.query(
+                "SELECT count(offer_id) as offers_count FROM offers WHERE DATEDIFF(NOW(), created_at) <= " +
+                    req.params.period,
+                function (err, result) {
+                    if (err) throw err;
+                    if (result) {
+                        report.offers_count = result[0].offers_count;
+                    }
+                }
+            );
+            return report;
+        })
+        .then((report) => {
+            con.query(
+                "SELECT count(user_id) as users_count FROM users WHERE DATEDIFF(NOW(), created_at) <= " +
+                    req.params.period,
+                function (err, result) {
+                    if (err) throw err;
+                    if (result) {
+                        report.users_count = result[0].users_count;
+                    }
+                }
+            );
+            return report;
+        })
+        .then((report) => {
+            con.query(
+                "SELECT p.category_id, c.name, count(p.category_id) AS projects_count from projects p, categories c WHERE c.category_id = p.category_id AND DATEDIFF(NOW(), created_at) <= " +
+                    req.params.period +
+                    " GROUP BY p.category_id",
+                function (err, result) {
+                    if (err) throw err;
+                    if (result) {
+                        report.projects_count_by_category = result;
+                    }
+                    res.send(report);
+                }
+            );
+        });
+});
 app.get("/getprojectsbydate/:period", function (req, res) {
     new Promise((resolve, reject) => {
         con.query(
-            "SELECT p.*, c.* FROM projects p, categories c WHERE c.category_id = p.category_id AND DATEDIFF(created_at, NOW()) <= 7",
+            "SELECT p.*, c.* FROM projects p, categories c WHERE c.category_id = p.category_id AND DATEDIFF(NOW(), created_at) <= " +
+                req.params.period,
             function (err, result) {
                 if (err) throw err;
                 resolve(result);
             }
         );
     }).then((projects) => {
-        projects.forEach((row) => {
-            new Promise((resolve2, reject) => {
-                con.query(
-                    "SELECT * FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
-                        row.project_id,
-                    function (err, skills) {
-                        if (err) throw err;
-                        resolve2(skills);
+        if (projects.length) {
+            projects.forEach((row) => {
+                new Promise((resolve2, reject) => {
+                    con.query(
+                        "SELECT * FROM project_skills ps, skills s WHERE ps.skill_id = s.skill_id AND ps.project_id = " +
+                            row.project_id,
+                        function (err, skills) {
+                            if (err) throw err;
+                            resolve2(skills);
+                        }
+                    );
+                }).then((skills) => {
+                    row.skills = skills;
+                    if (projects.indexOf(row) == projects.length - 1) {
+                        res.send(projects);
                     }
-                );
-            }).then((skills) => {
-                row.skills = skills;
-                if (projects.indexOf(row) == projects.length - 1) {
-                    res.send(projects);
-                }
+                });
             });
-        });
+        } else {
+            res.send(projects);
+        }
     });
 });
 app.get("/getmyprojects/:userId", function (req, res) {
