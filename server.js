@@ -176,20 +176,34 @@ app.get("/offers/:project_id", function (req, res) {
 
 app.post("/register", function (req, res) {
     con.query(
-        "INSERT INTO users(login, password, email, role_id) VALUES ('" +
-            req.body.login +
-            "', '" +
-            req.body.password +
-            "', '" +
-            req.body.mail +
-            "', " +
-            req.body.role +
-            ")",
-        function (err) {
+        "SELECT login FROM users WHERE login = " +
+        req.body.login,
+        function (err, user) {
             if (err) throw err;
-            res.end();
+            row.user = user;
+            if (!user.length) {
+                con.query(
+                    "INSERT INTO users(login, password, email, role_id) VALUES ('" +
+                        req.body.login +
+                        "', '" +
+                        req.body.password +
+                        "', '" +
+                        req.body.mail +
+                        "', " +
+                        req.body.role +
+                        ")",
+                    function (err) {
+                        if (err) throw err;
+                        res.end();
+                    }
+                );
+            }
+            else {
+                res.end();
+            }
         }
     );
+   
 });
 app.get("/login/:login/:password", function (req, res) {
     con.query(
