@@ -181,7 +181,7 @@ app.post("/register", function (req, res) {
         function (err, user) {
             if (err) throw err;
             row.user = user;
-            if (!user.length) {
+            if (user.length === 0) {
                 con.query(
                     "INSERT INTO users(login, password, email, role_id) VALUES ('" +
                         req.body.login +
